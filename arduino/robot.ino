@@ -17,51 +17,53 @@ Servo gripServo;
 
 String input = "";
 
-// current positions
+// ---------------- CURRENT POSITIONS ----------------
 int basePos = 90;
-int shoulderPos = 80;
-int elbowPos = 60;
+int shoulderPos = 70;
+int elbowPos = 40;
 int wristPos = 90;
-int gripPos = 70;
+int gripPos = 55;
 
-// base positions
-int baseHome = 90;
+// ---------------- BASE POSITIONS ----------------
+int baseReset = 90;
 
 int baseLeftSmall = 120;
-int baseLeft = 150;
+int baseLeft = 145;
 int baseLeftMore = 170;
 
 int baseRightSmall = 60;
-int baseRight = 30;
+int baseRight = 35;
 int baseRightMore = 10;
 
-// arm poses
-int shoulderUp = 80;
-int elbowUp = 60;
-int wristUp = 90;
+// ---------------- RESET / UPRIGHT POSE ----------------
+int shoulderReset = 70;
+int elbowReset = 40;
+int wristReset = 90;
 
-int shoulderDownSmall = 60;
-int elbowDownSmall = 100;
-int wristDownSmall = 105;
+// ---------------- DOWN POSES ----------------
+int shoulderDownSmall = 58;
+int elbowDownSmall = 75;
+int wristDownSmall = 100;
 
-int shoulderDown = 45;
-int elbowDown = 120;
-int wristDown = 115;
+int shoulderDown = 48;
+int elbowDown = 100;
+int wristDown = 110;
 
-int shoulderDownMore = 30;
-int elbowDownMore = 140;
-int wristDownMore = 125;
+int shoulderDownMore = 35;
+int elbowDownMore = 125;
+int wristDownMore = 120;
 
-// gripper
-int gripOpen = 70;
-int gripClose = 110;
+// ---------------- GRIPPER ----------------
+int gripOpen = 55;
+int gripClose = 155;
 
-// pose based on your photo
+// ---------------- PHOTO POSE ----------------
 int photoBase = 110;
 int photoShoulder = 55;
 int photoElbow = 115;
 int photoWrist = 105;
 
+// ---------------- OLED ----------------
 void showCommand(String cmd) {
   display.clearDisplay();
   display.setTextSize(1);
@@ -76,7 +78,11 @@ void showCommand(String cmd) {
   display.display();
 }
 
+// ---------------- SMOOTH MOVEMENT ----------------
 void moveServoSmooth(Servo &servo, int &currentPos, int targetPos) {
+  if (targetPos > 180) targetPos = 180;
+  if (targetPos < 0) targetPos = 0;
+
   if (currentPos < targetPos) {
     for (int i = currentPos; i <= targetPos; i++) {
       servo.write(i);
@@ -88,15 +94,18 @@ void moveServoSmooth(Servo &servo, int &currentPos, int targetPos) {
       delay(10);
     }
   }
+
   currentPos = targetPos;
 }
 
-void goToPose(int s, int e, int w) {
-  moveServoSmooth(shoulderServo, shoulderPos, s);
-  moveServoSmooth(elbowServo, elbowPos, e);
-  moveServoSmooth(wristServo, wristPos, w);
+// ---------------- SEPARATE ARM CONTROL ----------------
+void goToPose(int shoulderTarget, int elbowTarget, int wristTarget) {
+  moveServoSmooth(shoulderServo, shoulderPos, shoulderTarget);
+  moveServoSmooth(elbowServo, elbowPos, elbowTarget);
+  moveServoSmooth(wristServo, wristPos, wristTarget);
 }
 
+// ---------------- GRIP ----------------
 void openGrip() {
   moveServoSmooth(gripServo, gripPos, gripOpen);
 }
@@ -105,6 +114,7 @@ void closeGrip() {
   moveServoSmooth(gripServo, gripPos, gripClose);
 }
 
+// ---------------- BASE MOVEMENT ----------------
 void goLeftSmall() {
   moveServoSmooth(baseServo, basePos, baseLeftSmall);
 }
@@ -129,8 +139,9 @@ void goRightMore() {
   moveServoSmooth(baseServo, basePos, baseRightMore);
 }
 
+// ---------------- ARM ----------------
 void goUp() {
-  goToPose(shoulderUp, elbowUp, wristUp);
+  goToPose(shoulderReset, elbowReset, wristReset);
 }
 
 void goDownSmall() {
@@ -145,17 +156,21 @@ void goDownMore() {
   goToPose(shoulderDownMore, elbowDownMore, wristDownMore);
 }
 
-void homePosition() {
-  moveServoSmooth(baseServo, basePos, baseHome);
-  goToPose(shoulderUp, elbowUp, wristUp);
+// ---------------- RESET ----------------
+void resetPosition() {
+  moveServoSmooth(baseServo, basePos, baseReset);
+  goToPose(shoulderReset, elbowReset, wristReset);
+  openGrip();
 }
 
+// ---------------- OTHER POSES ----------------
 void photoPose() {
   moveServoSmooth(baseServo, basePos, photoBase);
   goToPose(photoShoulder, photoElbow, photoWrist);
   openGrip();
 }
 
+// ---------------- TASKS ----------------
 void pickObject() {
   goDownMore();
   delay(300);
@@ -172,14 +187,15 @@ void dropObject() {
   goUp();
 }
 
+// ---------------- SETUP ----------------
 void setup() {
   Serial.begin(9600);
 
-  baseServo.attach(9);      // Servo 1 = base
-  shoulderServo.attach(6);  // Servo 2 = shoulder
-  elbowServo.attach(5);     // Servo 3 = elbow
-  wristServo.attach(3);     // Servo 4 = wrist
-  gripServo.attach(11);     // Servo 5 = gripper
+  baseServo.attach(9);
+  shoulderServo.attach(6);
+  elbowServo.attach(5);
+  wristServo.attach(3);
+  gripServo.attach(11);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     for (;;);
@@ -188,13 +204,13 @@ void setup() {
   display.clearDisplay();
   display.display();
 
-  homePosition();
-  openGrip();
+  resetPosition();
   showCommand("READY");
 
   Serial.println("READY");
 }
 
+// ---------------- LOOP ----------------
 void loop() {
   while (Serial.available()) {
     char c = Serial.read();
@@ -251,9 +267,9 @@ void loop() {
         closeGrip();
         showCommand("CLOSE");
       }
-      else if (input == "HOME") {
-        homePosition();
-        showCommand("HOME");
+      else if (input == "RESET") {
+        resetPosition();
+        showCommand("RESET");
       }
       else if (input == "PICK") {
         pickObject();
