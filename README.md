@@ -52,7 +52,6 @@ An OLED display shows the current command being executed.
    - HOME
    - PICK
    - DROP
-   - PHOTO_POSE
 
 ## Video Demonstration
 
