@@ -24,21 +24,26 @@ int elbowPos = 60;
 int wristPos = 90;
 int gripPos = 70;
 
-// fully-up pose
-int shoulderUp = 90;
-int elbowUp = 40;
+// stronger fully-up pose
+int shoulderUp = 100;
+int elbowUp = 30;
 int wristUp = 90;
+
+// easier pick pose
+int shoulderPick = 70;
+int elbowPick = 100;
+int wristPick = 100;
 
 // grip
 int gripOpen = 70;
-int gripClose = 110;
+int gripClose = 120;
 
 // base step sizes
 int baseStepSmall = 10;
 int baseStep = 20;
 int baseStepBig = 35;
 
-// arm step sizes for downward movement
+// arm incremental step sizes
 int shoulderStep = 5;
 int elbowStep = 7;
 int wristStep = 4;
@@ -135,24 +140,35 @@ void goFullyUp() {
   moveArmSmooth(shoulderUp, elbowUp, wristUp);
 }
 
+void goPickPose() {
+  moveArmSmooth(shoulderPick, elbowPick, wristPick);
+}
+
 void resetPosition() {
   moveBase(90 - basePos);
   goFullyUp();
 }
 
 void pickObject() {
-  moveArm(-shoulderStep * 4, elbowStep * 4, wristStep * 4);
-  delay(300);
+  goPickPose();
+  delay(500);
+
   closeGrip();
-  delay(300);
+  delay(800);
+
   goFullyUp();
+  delay(500);
+
+  closeGrip();
 }
 
 void dropObject() {
-  moveArm(-shoulderStep * 4, elbowStep * 4, wristStep * 4);
-  delay(300);
+  goPickPose();
+  delay(500);
+
   openGrip();
-  delay(300);
+  delay(500);
+
   goFullyUp();
 }
 
