@@ -14,8 +14,9 @@ print("LEFT_SMALL, LEFT, LEFT_MORE")
 print("RIGHT_SMALL, RIGHT, RIGHT_MORE")
 print("DOWN_SMALL, DOWN, DOWN_MORE")
 print("UP")
-print("OPEN, CLOSE, HOME")
-print("PICK, DROP, PHOTO_POSE")
+print("OPEN, CLOSE, RESET")
+print("PICK, DROP")
+print("PHOTO_POSE")
 print("Type Q to quit")
 
 while True:
