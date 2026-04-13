@@ -1,7 +1,7 @@
 # Robotics Assignment 2
 
 ## Project Title
-Voice and Command Controlled Robotic Arm
+Voice-Controlled-Robotic-Arm
 
 ## Team Members
 - Emmanuel Atiso
