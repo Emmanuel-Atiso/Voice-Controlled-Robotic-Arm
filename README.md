@@ -20,6 +20,12 @@ The robotic arm performs movements such as left, right, up, and down, as well as
 The robot supports:
 
 - Incremental movement control (LEFT, RIGHT, UP, DOWN)
+- LEFT_SMALL → +10°
+- LEFT → +20°
+- LEFT_MORE → +35°
+- RIGHT_SMALL → -10°
+- RIGHT → -20°
+- RIGHT_MORE → -35°
 - Multi-step commands (PICK, DROP)
 - Reset to default position (RESET)
 - Precision control using repeat commands (e.g. RIGHT 3)
