@@ -97,6 +97,7 @@ Custom components for the robotic arm were designed and prepared using 3D printi
 The parts were printed using PLA filament with a standard 0.4mm nozzle. The slicing process allowed control over print quality, layer height, and structural strength.
 
 3D printing enabled rapid prototyping and customisation of components such as holders and attachments, which improved the functionality and adaptability of the robotic system.
+![Slicer Setup](images/Screenshot%202026-04-15%20at%2013.39.52.png)
 
 ## Future Improvements
 
