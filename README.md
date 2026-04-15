@@ -103,13 +103,6 @@ The final implementation reflects independent understanding and practical applic
 
 ---
 
-## References
-
-- Arduino Documentation  
-- Adafruit SSD1306 Library  
-- Python pyserial Documentation  
-- Windows Voice Dictation Documentation  
-- Adeept Robotic Arm Kit Resources  
 
 ## References
 - Adeept.com. (2026). Adeept 5-DOF Robotic Arm Assembly Tutorial | Step-by-Step Guide | ADA031 Tutorial - Adeept Video. [online] Available at: https://www.adeept.com/video/detail-164.html [Accessed 11 Apr. 2026].
