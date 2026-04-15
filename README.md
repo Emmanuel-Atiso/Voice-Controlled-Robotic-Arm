@@ -119,12 +119,18 @@ The parts were printed using PLA filament with a standard 0.4mm nozzle. The slic
 - Automated sorting system based on object colour or position
 
 ---
+## AI Transparency Statement
 
-## AI Usage Declaration
+This project aligns with **AITS Level 2 – AI for Shaping**.
 
-AI tools were used during the development of this project to assist with debugging, code structuring, and generating documentation. All generated content was reviewed, tested, and adapted to fit the specific requirements of the project.
+Artificial Intelligence was used to support development, including:
+- suggesting and refining code structure
+- assisting with debugging and problem-solving
+- improving documentation and explanation of concepts
 
-The final implementation reflects independent understanding and practical application of the concepts.
+All code was tested, modified, and integrated independently with the hardware system. Key decisions such as movement logic, servo calibration, and system behaviour were made and validated through hands-on implementation.
+
+AI outputs were critically reviewed and adapted before use. The final system reflects independent understanding and development, with AI used as a support tool rather than a primary creator.
 
 ---
 
