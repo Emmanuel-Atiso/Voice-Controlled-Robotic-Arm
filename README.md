@@ -1,4 +1,4 @@
-# Robotics Assignment 2
+# Robotics Assignment 
 
 ## Project Title
 Voice-Controlled-Robotic-Arm
@@ -6,55 +6,110 @@ Voice-Controlled-Robotic-Arm
 ## Team Members
 - Emmanuel Atiso
 - Derrikson Apenteng
-## Project Summary
-This project uses an Arduino-controlled robotic arm with servo motors.  
-The robot can respond to typed or spoken commands such as left, right, down, up, open, and close.  
-An OLED display shows the current command being executed.
 
-## Hardware Used
-- Arduino Uno
-- Adeept 5-DOF robotic arm
-- 5 servo motors
-- OLED display
-- USB cable
-- PC running Python
+## Project Overview
 
-## Pin Layout
-- Servo 1: pin 9 (base)
-- Servo 2: pin 6 (shoulder)
-- Servo 3: pin 5 (elbow)
-- Servo 4: pin 3 (wrist)
-- Servo 5: pin 11 (gripper)
+This project presents a voice and command-controlled robotic arm system developed using an Arduino Uno, Python, and a 5-DOF robotic arm. The system allows users to control the arm through typed commands and Windows voice dictation, enabling interaction through both manual and voice-based inputs.
 
-## Software Used
-- Arduino IDE
-- Python
-- pyserial
+The robotic arm performs movements such as left, right, up, and down, as well as object interaction through gripping, picking, and placing actions. An OLED display provides real-time feedback, showing the current command being executed.
 
-## How to Run
-1. Upload the Arduino code to the Arduino Uno.
-2. Close Arduino IDE.
-3. Connect the OLED and robot arm.
-4. Run the Python script.
-5. Type commands such as:
-   - LEFT_SMALL
-   - LEFT
-   - LEFT_MORE
-   - RIGHT_SMALL
-   - RIGHT
-   - RIGHT_MORE
-   - DOWN_SMALL
-   - DOWN
-   - DOWN_MORE
-   - UP
-   - OPEN
-   - CLOSE
-   - HOME
-   - PICK
-   - DROP
+---
 
-## Video Demonstration
+## System Functionality
 
+The robot supports:
+
+- Incremental movement control (LEFT, RIGHT, UP, DOWN)
+- Multi-step commands (PICK, DROP)
+- Reset to default position (RESET)
+- Precision control using repeat commands (e.g. RIGHT 3)
+- OLED feedback display
+
+The system is controlled through a Python interface, which sends commands to the Arduino via serial communication.
+
+---
+
+## Voice Control (Windows Dictation)
+
+Windows voice dictation was integrated as an input method to allow hands-free control of the system. Users can speak commands such as “left”, “right”, or “pick”, which are interpreted and sent through the Python interface.
+
+This feature demonstrates how the system can be adapted for accessibility, allowing users with limited mobility to control the robotic arm without needing a keyboard.
+
+Additionally, the system can be extended to provide audio feedback (text-to-speech), enabling two-way interaction between the user and the robot.
+
+---
+
+## Accessibility Applications
+
+This system has potential applications in assisting individuals with physical disabilities. Voice control allows users who may have limited hand movement to interact with objects through the robotic arm.
+
+Possible use cases include:
+- Picking up and moving objects
+- Assisting with simple daily tasks
+- Acting as an assistive robotic interface
+
+The combination of voice input and visual feedback makes the system more inclusive and user-friendly.
+
+---
+
+## Software and Technologies Used
+
+- Arduino IDE (C++)
+- Python (Serial Communication using pyserial)
+- Windows Voice Dictation
+- OLED Display (Adafruit SSD1306 library)
+- Servo motor control using Arduino Servo library
+
+---
+
+## Initial Project Planning and Changes
+
+Initially, the project aimed to implement a robotic arm capable of writing or drawing using a pen attachment. This would involve precise motion control and path planning.
+
+However, this approach was not fully pursued due to:
+- Time constraints
+- Hardware limitations of the robotic arm
+- Difficulty achieving consistent precision with servo motors
+
+As a result, the focus shifted to building a reliable command-controlled robotic system with improved usability and interaction.
+
+---
+
+## Object Tracking (Partial Implementation)
+
+Object tracking was explored using computer vision techniques. The system was able to detect and track objects successfully.
+
+However, due to time constraints, this feature was not fully integrated with the robotic arm control system. While tracking worked independently, it was not connected to trigger robotic actions.
+
+This remains a potential future improvement, where the robot could automatically detect and pick objects without manual commands.
+
+---
+
+## Future Improvements
+
+- Full integration of object detection with robotic control
+- Improved servo strength or power supply for better lifting performance
+- Addition of text-to-speech feedback
+- Enhanced voice recognition system
+- Automated sorting system based on object colour or position
+
+---
+
+## AI Usage Declaration
+
+AI tools were used during the development of this project to assist with debugging, code structuring, and generating documentation. All generated content was reviewed, tested, and adapted to fit the specific requirements of the project.
+
+The final implementation reflects independent understanding and practical application of the concepts.
+
+---
+
+## References
+
+- Arduino Documentation  
+- Adafruit SSD1306 Library  
+- Python pyserial Documentation  
+- Windows Voice Dictation Documentation  
+- Adeept Robotic Arm Kit Resources  
 
 ## References
 - Adeept.com. (2026). Adeept 5-DOF Robotic Arm Assembly Tutorial | Step-by-Step Guide | ADA031 Tutorial - Adeept Video. [online] Available at: https://www.adeept.com/video/detail-164.html [Accessed 11 Apr. 2026].
