@@ -90,6 +90,13 @@ However, due to time constraints, this feature was not fully integrated with the
 This remains a potential future improvement, where the robot could automatically detect and pick objects without manual commands.
 
 ---
+## 3D Design and Manufacturing
+
+Custom components for the robotic arm were designed and prepared using 3D printing. A slicing software (Bambu Studio) was used to convert 3D models into printable layers and generate G-code for the printer.
+
+The parts were printed using PLA filament with a standard 0.4mm nozzle. The slicing process allowed control over print quality, layer height, and structural strength.
+
+3D printing enabled rapid prototyping and customisation of components such as holders and attachments, which improved the functionality and adaptability of the robotic system.
 
 ## Future Improvements
 
