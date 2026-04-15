@@ -32,6 +32,9 @@ The robot supports:
 - OLED feedback display
 
 The system is controlled through a Python interface, which sends commands to the Arduino via serial communication.
+<div align="center">
+  <img src="images/Screenshot%202026-04-15%20at%2014.01.10.png" width="400">
+</div>
 
 ---
 
