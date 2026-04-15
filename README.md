@@ -140,5 +140,3 @@ AI outputs were critically reviewed and adapted before use. The final system ref
 - Tech, S. (2021). How To Build Adeept Robotic Arm. [online] Youtu.be. Available at: https://youtu.be/mtzavQi6j6U?si=N2nn8bZ3sRPsuEnv [Accessed 21 Mar. 2026].
 
 
-## AI Transparency Statement
-State your AITS level and explain how AI was used.
