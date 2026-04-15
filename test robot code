@@ -17,9 +17,6 @@ Servo gripServo;
 
 String input = "";
 
-// ---------------- PINS ----------------
-int buzzerPin = 8;
-
 // ---------------- CURRENT POSITIONS ----------------
 int basePos = 90;
 int shoulderPos = 120;
@@ -74,23 +71,6 @@ int elbowMax = 150;
 
 int wristMin = 60;
 int wristMax = 130;
-
-// ---------------- BUZZER ----------------
-void beepWarning() {
-  tone(buzzerPin, 1000);
-  delay(120);
-  noTone(buzzerPin);
-}
-
-void beepSuccess() {
-  tone(buzzerPin, 1400);
-  delay(100);
-  noTone(buzzerPin);
-  delay(60);
-  tone(buzzerPin, 1800);
-  delay(120);
-  noTone(buzzerPin);
-}
 
 // ---------------- DISPLAY ----------------
 void showCommand(String cmd) {
@@ -151,11 +131,9 @@ void moveBaseTo(int target) {
   if (target > baseMax) {
     target = baseMax;
     showLimit("BASE MAX");
-    beepWarning();
   } else if (target < baseMin) {
     target = baseMin;
     showLimit("BASE MIN");
-    beepWarning();
   }
 
   while (basePos != target) {
@@ -211,7 +189,6 @@ void moveArm(int sStep, int eStep, int wStep) {
 
   if (limitHit) {
     showLimit(limitMsg);
-    beepWarning();
   }
 
   moveArmSmooth(targetShoulder, targetElbow, targetWrist);
@@ -274,7 +251,6 @@ void pickObject() {
   delay(300);
 
   closeGrip();
-  beepSuccess();
 }
 
 void dropObject() {
@@ -305,8 +281,6 @@ void setup() {
   elbowServo.attach(5);
   wristServo.attach(3);
   gripServo.attach(11);
-
-  pinMode(buzzerPin, OUTPUT);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     for (;;);
