@@ -196,13 +196,14 @@ Due to time constraints, it was not integrated with the robotic arm. However, it
 This can be extended in future work.
 
 ---
-## 📜 Legal, Safety, and Ethical Considerations
+
+## Legal, Safety, and Ethical Considerations
 
 This project involves a robotic arm system with **object tracking (computer vision)** and **manual/voice control**, which introduces important legal, safety, and ethical considerations. The following frameworks are relevant to the responsible design and operation of this system.
 
 ---
 
-### 🦾 Robot Safety Standards (ISO)
+### Robot Safety Standards (ISO)
 
 The system design is informed by standards from the International Organization for Standardization (ISO), including:
 
@@ -236,7 +237,7 @@ Robotic systems involve moving mechanical components that may pose safety risks 
 
 ---
 
-### 📷 Data Protection (UK GDPR)
+### 📷 Data Protection 
 
 The system uses a camera for object tracking, which falls under the scope of the UK General Data Protection Regulation (UK GDPR).
 
@@ -250,7 +251,7 @@ If the system captures identifiable individuals, it may involve the processing o
 
 ---
 
-### 🌍 International AI Regulation (Reference)
+###  International AI Regulation 
 
 Although the United Kingdom is no longer part of the European Union, the EU AI Act (developed by the European Commission) is recognised as a leading global framework for regulating AI systems.
 
@@ -264,7 +265,7 @@ It provides a benchmark for classifying AI systems based on risk, particularly t
 
 ---
 
-### 🧠 Ethical Considerations
+### Ethical Considerations
 
 This project follows general ethical principles outlined by organisations such as the IEEE and the British Standards Institution (BSI).
 
@@ -281,7 +282,7 @@ This project follows general ethical principles outlined by organisations such a
 
 ---
 
-### ⚠️ Risk Assessment
+### Risk Assessment
 
 **Identified risks:**  
 - Unexpected movement of the robotic arm  
@@ -296,6 +297,9 @@ This project follows general ethical principles outlined by organisations such a
 
 ---
 
+###  Conclusion
+
+In this project we aimed to demonstrate responsible robotics development by considering safety, legal compliance, and ethical design. Whilst it is a prototype, it reflects real-world requirements for systems that interact with physical environments and users.
 
 ## 3D Design and Manufacturing
 
@@ -347,3 +351,16 @@ AI outputs were critically reviewed and adapted before use. The final system ref
 
 * Adeept.com. (2026). Adeept 5-DOF Robotic Arm Assembly Tutorial | Step-by-Step Guide | ADA031 Tutorial - Adeept Video. [online] Available at: https://www.adeept.com/video/detail-164.html [Accessed 11 Apr. 2026].
 * Tech, S. (2021). How To Build Adeept Robotic Arm. [online] Youtu.be. Available at: https://youtu.be/mtzavQi6j6U?si=N2nn8bZ3sRPsuEnv [Accessed 21 Mar. 2026].
+* BSI (2020) BS EN ISO 12100: Safety of machinery – General principles for design. London: British Standards Institution. Available at: https://www.bsigroup.com (Accessed: 16 April 2026).
+
+European Commission (2024) Artificial Intelligence Act. Brussels: European Union. Available at: https://digital-strategy.ec.europa.eu/en/policies/european-approach-artificial-intelligence (Accessed: 16 April 2026).
+
+Health and Safety at Work etc. Act 1974. London: HMSO. Available at: https://www.legislation.gov.uk/ukpga/1974/37 (Accessed: 16 April 2026).
+
+IEEE (2019) Ethically Aligned Design: A Vision for Prioritizing Human Well-being with Autonomous and Intelligent Systems. New York: Institute of Electrical and Electronics Engineers. Available at: https://standards.ieee.org/industry-connections/ec/autonomous-systems.html (Accessed: 16 April 2026).
+
+ISO (2011) ISO 10218-1:2011 Robots and robotic devices – Safety requirements for industrial robots. Geneva: International Organization for Standardization. Available at: https://www.iso.org/standard/51330.html (Accessed: 16 April 2026).
+
+ISO (2016) ISO/TS 15066:2016 Robots and robotic devices – Collaborative robots. Geneva: International Organization for Standardization. Available at: https://www.iso.org/standard/62996.html (Accessed: 16 April 2026).
+
+UK Government (2018) Data Protection Act 2018. London: HMSO. Available at: https://www.legislation.gov.uk/ukpga/2018/12/contents (Accessed: 16 April 2026).
