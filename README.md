@@ -1,11 +1,15 @@
-# Robotics Assignment 
+# Robotics Assignment
 
 ## Project Title
+
 Voice-Controlled-Robotic-Arm
 
 ## Team Members
-- Emmanuel Atiso
-- Derrikson Apenteng
+
+* Emmanuel Atiso
+* Derrikson Apenteng
+
+---
 
 ## Project Overview
 
@@ -19,87 +23,195 @@ The robotic arm performs movements such as left, right, up, and down, as well as
 
 The robot supports:
 
-- Incremental movement control (LEFT, RIGHT, UP, DOWN)
-- LEFT_SMALL → +10°
-- LEFT → +20°
-- LEFT_MORE → +35°
-- RIGHT_SMALL → -10°
-- RIGHT → -20°
-- RIGHT_MORE → -35°
-- Multi-step commands (PICK, DROP)
-- Reset to default position (RESET)
-- Precision control using repeat commands (e.g. RIGHT 3)
-- OLED feedback display
+* Incremental movement control (LEFT, RIGHT, UP, DOWN)
+* LEFT_SMALL → +10°
+* LEFT → +20°
+* LEFT_MORE → +35°
+* RIGHT_SMALL → -10°
+* RIGHT → -20°
+* RIGHT_MORE → -35°
+* Multi-step commands (PICK, DROP)
+* Reset to default position (RESET)
+* Precision control using repeat commands (e.g. RIGHT 3)
+* OLED feedback display
 
 The system is controlled through a Python interface, which sends commands to the Arduino via serial communication.
+
 <div align="center">
   <img src="images/Screenshot%202026-04-15%20at%2014.01.10.png" width="400">
 </div>
 
 ---
 
+## Setup and Usage Instructions
+
+### Hardware Setup
+
+* Servo 1 (Base) → Pin 9
+* Servo 2 (Shoulder) → Pin 6
+* Servo 3 (Elbow) → Pin 5
+* Servo 4 (Wrist) → Pin 3
+* Servo 5 (Gripper) → Pin 11
+* OLED display via I2C
+* Buzzer → Pin 8 + GND
+* Arduino connected via USB
+
+---
+
+### Arduino Setup
+
+1. Open Arduino IDE
+2. Install libraries:
+
+   * Adafruit SSD1306
+   * Adafruit GFX
+   * Servo
+3. Open `robot_arm.ino`
+4. Select correct board + COM port
+5. Upload code
+
+---
+
+### Python Setup
+
+1. Install Python
+2. Install pyserial:
+
+```bash
+pip install pyserial
+```
+
+3. Set COM port in code:
+
+```python
+PORT = "COM3"
+```
+
+4. Run:
+
+```bash
+py robot_test.py
+```
+
+---
+
+### How to Use
+
+#### Movement Commands
+
+* LEFT_SMALL / LEFT / LEFT_MORE
+* RIGHT_SMALL / RIGHT / RIGHT_MORE
+* UP_SMALL / UP / UP_MORE
+* DOWN_SMALL / DOWN / DOWN_MORE
+
+#### Control Commands
+
+* OPEN
+* CLOSE
+* RESET
+* PICK
+* DROP
+
+#### Repeat Commands
+
+```text
+RIGHT 3
+UP 2
+LEFT_SMALL 4
+```
+
+---
+
+### Feedback Features
+
+* OLED shows active command
+* Buzzer:
+
+  * short beep = limit reached
+  * success beep = pick complete
+
+---
+
+## Project Structure
+
+```text
+arduino/
+  robot_arm.ino
+python/
+  robot_test.py
+images/
+  Screenshot 2026-04-15 at 13.39.52.png
+  Screenshot 2026-04-15 at 13.52.53.png
+  Screenshot 2026-04-15 at 14.01.10.png
+README.md
+```
+
+---
+
 ## Voice Control (Windows Dictation)
 
-Windows voice dictation was integrated as an input method to allow hands-free control of the system. Users can speak commands such as “left”, “right”, or “pick”, which are interpreted and sent through the Python interface.
+Windows voice dictation was integrated as an input method to allow hands-free control. Users can speak commands such as “left”, “right”, or “pick”, which are interpreted and sent through the Python interface.
 
-This feature demonstrates how the system can be adapted for accessibility, allowing users with limited mobility to control the robotic arm without needing a keyboard.
-
-Additionally, the system can be extended to provide audio feedback (text-to-speech), enabling two-way interaction between the user and the robot.
+This improves accessibility and allows interaction without a keyboard.
 
 ---
 
 ## Accessibility Applications
 
-This system has potential applications in assisting individuals with physical disabilities. Voice control allows users who may have limited hand movement to interact with objects through the robotic arm.
+This system can assist users with limited mobility by enabling control through voice input.
 
-Possible use cases include:
-- Picking up and moving objects
-- Assisting with simple daily tasks
-- Acting as an assistive robotic interface
+Possible uses:
 
-The combination of voice input and visual feedback makes the system more inclusive and user-friendly.
+* picking and moving objects
+* assisting simple tasks
+* acting as an assistive robotic interface
 
 ---
 
 ## Software and Technologies Used
 
-- Arduino IDE (C++)
-- Python (Serial Communication using pyserial)
-- Windows Voice Dictation
-- OLED Display (Adafruit SSD1306 library)
-- Servo motor control using Arduino Servo library
+* Arduino IDE (C++)
+* Python (pyserial)
+* Windows Voice Dictation
+* OLED (Adafruit SSD1306)
+* Servo control
 
 ---
 
 ## Initial Project Planning and Changes
 
-Initially, the project aimed to implement a robotic arm capable of writing or drawing using a pen attachment. This would involve precise motion control and path planning.
+The original idea was to create a robotic arm capable of writing/drawing.
 
-However, this approach was not fully pursued due to:
-- Time constraints
-- Hardware limitations of the robotic arm
-- Difficulty achieving consistent precision with servo motors
+This was not completed due to:
 
-As a result, the focus shifted to building a reliable command-controlled robotic system with improved usability and interaction.
+* time constraints
+* hardware limitations
+* precision challenges
+
+The project shifted to a command-controlled system focusing on reliability and usability.
 
 ---
 
 ## Object Tracking (Partial Implementation)
 
-Object tracking was explored using computer vision techniques. The system was able to detect and track objects successfully.
+Object tracking was implemented separately using computer vision.
 
-However, due to time constraints, this feature was not fully integrated with the robotic arm control system. While tracking worked independently, it was not connected to trigger robotic actions.
+Due to time constraints, it was not integrated with the robotic arm. However, it successfully detected and tracked objects.
 
-This remains a potential future improvement, where the robot could automatically detect and pick objects without manual commands.
+This can be extended in future work.
 
 ---
+
 ## 3D Design and Manufacturing
 
-Custom components for the robotic arm were designed and prepared using 3D printing. A slicing software (Bambu Studio) was used to convert 3D models into printable layers and generate G-code for the printer.
+3D printing was used to create custom components.
 
-The parts were printed using PLA filament with a standard 0.4mm nozzle. The slicing process allowed control over print quality, layer height, and structural strength.
+* Software: Bambu Studio
+* Material: PLA
+* Nozzle: 0.4mm
+* Layer height: 0.2mm
 
-3D printing enabled rapid prototyping and customisation of components such as holders and attachments, which improved the functionality and adaptability of the robotic system.
+This allowed rapid prototyping and improved system adaptability.
 
 <div align="center">
   <img src="images/Screenshot%202026-04-15%20at%2013.39.52.png" width="400">
@@ -109,36 +221,37 @@ The parts were printed using PLA filament with a standard 0.4mm nozzle. The slic
   <img src="images/Screenshot%202026-04-15%20at%2013.52.53.png" width="400">
 </div>
 
+---
 
 ## Future Improvements
 
-- Full integration of object detection with robotic control
-- Improved servo strength or power supply for better lifting performance
-- Addition of text-to-speech feedback
-- Enhanced voice recognition system
-- Automated sorting system based on object colour or position
---
+* integrate object detection with robot
+* improve servo power
+* add text-to-speech
+* improve voice recognition
+* automated sorting system
+
+---
+
 ## Video Presentation
+
 https://youtu.be/H1ilLcpVcLE
 
 ---
+
 ## AI Transparency Statement
 
 This project aligns with **AITS Level 2 – AI for Shaping**.
 
-Artificial Intelligence was used as a supporting tool during development. It assisted with generating initial code structures, suggesting improvements, debugging errors, and refining documentation.
+Artificial Intelligence was used as a supporting tool during development. It assisted with code structuring, debugging, and documentation.
 
-However, all core aspects of the system were developed independently. This included integrating hardware components, calibrating servo motors, designing movement logic, and testing the system in real-world conditions. The robotic arm required iterative adjustments to ensure correct behaviour, particularly in movement coordination and limit handling.
+All system implementation, testing, and hardware integration were carried out independently. The robotic arm required manual calibration and iterative refinement to achieve correct behaviour.
 
-All AI-generated outputs were critically reviewed, tested, and modified before implementation. Decisions were made based on practical testing and system requirements rather than relying directly on AI suggestions.
-
-The final system reflects independent understanding and development, with AI used to support, rather than lead, the process.
+AI outputs were critically reviewed and adapted before use. The final system reflects independent understanding, with AI used to support—not lead—the development process.
 
 ---
 
-
 ## References
-- Adeept.com. (2026). Adeept 5-DOF Robotic Arm Assembly Tutorial | Step-by-Step Guide | ADA031 Tutorial - Adeept Video. [online] Available at: https://www.adeept.com/video/detail-164.html [Accessed 11 Apr. 2026].
-- Tech, S. (2021). How To Build Adeept Robotic Arm. [online] Youtu.be. Available at: https://youtu.be/mtzavQi6j6U?si=N2nn8bZ3sRPsuEnv [Accessed 21 Mar. 2026].
 
-
+* Adeept.com. (2026). Adeept 5-DOF Robotic Arm Assembly Tutorial | Step-by-Step Guide | ADA031 Tutorial - Adeept Video. [online] Available at: https://www.adeept.com/video/detail-164.html [Accessed 11 Apr. 2026].
+* Tech, S. (2021). How To Build Adeept Robotic Arm. [online] Youtu.be. Available at: https://youtu.be/mtzavQi6j6U?si=N2nn8bZ3sRPsuEnv [Accessed 21 Mar. 2026].
