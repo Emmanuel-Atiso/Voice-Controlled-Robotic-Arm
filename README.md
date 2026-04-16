@@ -124,10 +124,6 @@ LEFT_SMALL 4
 ### Feedback Features
 
 * OLED shows active command
-* Buzzer:
-
-  * short beep = limit reached
-  * success beep = pick complete
 
 ---
 
