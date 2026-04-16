@@ -66,7 +66,7 @@ The system is controlled through a Python interface, which sends commands to the
    * Adafruit SSD1306
    * Adafruit GFX
    * Servo
-3. Open `robot_arm.ino`
+3. Open `robot.ino`
 4. Select correct board + COM port
 5. Upload code
 
@@ -90,7 +90,7 @@ PORT = "COM3"
 4. Run:
 
 ```bash
-py robot_test.py
+py robot_audio.py
 ```
 
 ---
@@ -136,9 +136,9 @@ LEFT_SMALL 4
 
 ```text
 arduino/
-  robot_arm.ino
+  robot.ino
 python/
-  robot_test.py
+  robot_audio.py
 images/
   Screenshot 2026-04-15 at 13.39.52.png
   Screenshot 2026-04-15 at 13.52.53.png
@@ -207,9 +207,6 @@ This can be extended in future work.
 3D printing was used to create custom components.
 
 * Software: Bambu Studio
-* Material: PLA
-* Nozzle: 0.4mm
-* Layer height: 0.2mm
 
 This allowed rapid prototyping and improved system adaptability.
 
