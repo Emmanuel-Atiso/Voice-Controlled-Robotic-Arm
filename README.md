@@ -119,8 +119,8 @@ The parts were printed using PLA filament with a standard 0.4mm nozzle. The slic
 - Automated sorting system based on object colour or position
 --
 ## Video Presentation
-
 https://youtu.be/H1ilLcpVcLE
+
 ---
 ## AI Transparency Statement
 
