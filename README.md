@@ -220,7 +220,7 @@ These standards ensure that robots operating in proximity to humans do so safely
 
 ---
 
-### ⚖️ UK Health and Safety Legislation
+### UK Health and Safety Legislation
 
 This project aligns with guidance from the UK Health and Safety Executive (HSE), including:
 
@@ -237,7 +237,7 @@ Robotic systems involve moving mechanical components that may pose safety risks 
 
 ---
 
-### 📷 Data Protection 
+###  Data Protection 
 
 The system uses a camera for object tracking, which falls under the scope of the UK General Data Protection Regulation (UK GDPR).
 
