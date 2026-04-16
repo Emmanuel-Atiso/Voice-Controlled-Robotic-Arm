@@ -126,14 +126,13 @@ https://youtu.be/H1ilLcpVcLE
 
 This project aligns with **AITS Level 2 – AI for Shaping**.
 
-Artificial Intelligence was used to support development, including:
-- suggesting and refining code structure
-- assisting with debugging and problem-solving
-- improving documentation and explanation of concepts
+Artificial Intelligence was used as a supporting tool during development. It assisted with generating initial code structures, suggesting improvements, debugging errors, and refining documentation.
 
-All code was tested, modified, and integrated independently with the hardware system. Key decisions such as movement logic, servo calibration, and system behaviour were made and validated through hands-on implementation.
+However, all core aspects of the system were developed independently. This included integrating hardware components, calibrating servo motors, designing movement logic, and testing the system in real-world conditions. The robotic arm required iterative adjustments to ensure correct behaviour, particularly in movement coordination and limit handling.
 
-AI outputs were critically reviewed and adapted before use. The final system reflects independent understanding and development, with AI used as a support tool rather than a primary creator.
+All AI-generated outputs were critically reviewed, tested, and modified before implementation. Decisions were made based on practical testing and system requirements rather than relying directly on AI suggestions.
+
+The final system reflects independent understanding and development, with AI used to support, rather than lead, the process.
 
 ---
 
