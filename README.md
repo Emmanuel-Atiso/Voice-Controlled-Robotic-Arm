@@ -196,6 +196,106 @@ Due to time constraints, it was not integrated with the robotic arm. However, it
 This can be extended in future work.
 
 ---
+## 📜 Legal, Safety, and Ethical Considerations
+
+This project involves a robotic arm system with **object tracking (computer vision)** and **manual/voice control**, which introduces important legal, safety, and ethical considerations. The following frameworks are relevant to the responsible design and operation of this system.
+
+---
+
+### 🦾 Robot Safety Standards (ISO)
+
+The system design is informed by standards from the International Organization for Standardization (ISO), including:
+
+- ISO 10218 – Industrial robot safety  
+- ISO/TS 15066 – Collaborative robot (cobot) safety  
+
+**Why this is relevant:**  
+These standards ensure that robots operating in proximity to humans do so safely, reducing risks such as collision, sudden movement, or mechanical injury.
+
+**Application in this project:**  
+- Movements are controlled using **small incremental steps**  
+- The system avoids sudden or high-speed motion  
+- The user can **stop tracking at any time**, maintaining full control  
+
+---
+
+### ⚖️ UK Health and Safety Legislation
+
+This project aligns with guidance from the UK Health and Safety Executive (HSE), including:
+
+- Health and Safety at Work etc. Act 1974  
+- General machinery safety principles  
+
+**Why this is relevant:**  
+Robotic systems involve moving mechanical components that may pose safety risks if not properly controlled.
+
+**Application in this project:**  
+- The robot operates at **low speed and within a limited range**  
+- The system is designed for **supervised use only**  
+- Commands are executed in a controlled and predictable manner  
+
+---
+
+### 📷 Data Protection (UK GDPR)
+
+The system uses a camera for object tracking, which falls under the scope of the UK General Data Protection Regulation (UK GDPR).
+
+**Why this is relevant:**  
+If the system captures identifiable individuals, it may involve the processing of personal data.
+
+**Application in this project:**  
+- The system is designed to track **objects only, not individuals**  
+- No images or video data are stored  
+- All processing is carried out **locally in real time**, ensuring privacy  
+
+---
+
+### 🌍 International AI Regulation (Reference)
+
+Although the United Kingdom is no longer part of the European Union, the EU AI Act (developed by the European Commission) is recognised as a leading global framework for regulating AI systems.
+
+**Why this is relevant:**  
+It provides a benchmark for classifying AI systems based on risk, particularly those interacting with real-world environments.
+
+**Application in this project:**  
+- The system maintains **human oversight at all times**  
+- It does not operate autonomously without user input  
+- System behaviour is transparent and predictable  
+
+---
+
+### 🧠 Ethical Considerations
+
+This project follows general ethical principles outlined by organisations such as the IEEE and the British Standards Institution (BSI).
+
+**Key principles:**  
+- Safety  
+- Transparency  
+- Human control  
+- Accountability  
+
+**Application in this project:**  
+- The user remains in full control of the system  
+- The robot does not make independent decisions  
+- All actions are based on visible inputs and user commands  
+
+---
+
+### ⚠️ Risk Assessment
+
+**Identified risks:**  
+- Unexpected movement of the robotic arm  
+- Collision with objects or users  
+- Errors in object tracking  
+
+**Mitigation strategies:**  
+- Use of **dead zones** to prevent jitter  
+- Controlled command timing to avoid overload  
+- Incremental movement rather than large positional changes  
+- Clear separation between manual and tracking modes  
+
+---
+
 
 ## 3D Design and Manufacturing
 
