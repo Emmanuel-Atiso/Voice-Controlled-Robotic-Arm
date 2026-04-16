@@ -117,6 +117,10 @@ The parts were printed using PLA filament with a standard 0.4mm nozzle. The slic
 - Addition of text-to-speech feedback
 - Enhanced voice recognition system
 - Automated sorting system based on object colour or position
+--
+## Video Presentation
+
+https://youtu.be/VAJcdMl4j2M?si=eJjCCIJod6UqSGhv
 
 ---
 ## AI Transparency Statement
