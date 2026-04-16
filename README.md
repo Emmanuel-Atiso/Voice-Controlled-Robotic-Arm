@@ -53,7 +53,6 @@ The system is controlled through a Python interface, which sends commands to the
 * Servo 4 (Wrist) → Pin 3
 * Servo 5 (Gripper) → Pin 11
 * OLED display via I2C
-* Buzzer → Pin 8 + GND
 * Arduino connected via USB
 
 ---
@@ -67,7 +66,7 @@ The system is controlled through a Python interface, which sends commands to the
    * Adafruit GFX
    * Servo
 3. Open `robot.ino`
-4. Select correct board + COM port
+4. Select correct board arduino uno + COM port
 5. Upload code
 
 ---
