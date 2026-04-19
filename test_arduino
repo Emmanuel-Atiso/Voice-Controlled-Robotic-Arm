@@ -1,0 +1,368 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Servo.h>
+
+// =========================================================
+// OLED DISPLAY
+// =========================================================
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// =========================================================
+// SERVO OBJECTS
+// =========================================================
+Servo baseServo;      // base rotation
+Servo shoulderServo;  // main lift joint
+Servo elbowServo;     // secondary bend joint
+Servo wristServo;     // wrist joint
+Servo gripServo;      // gripper
+
+// =========================================================
+// SERIAL INPUT
+// =========================================================
+String input = "";
+
+// =========================================================
+// CURRENT SERVO POSITIONS
+// =========================================================
+int basePos = 90;
+int shoulderPos = 100;
+int elbowPos = 80;
+int wristPos = 90;
+int gripPos = 70;
+
+// =========================================================
+// SAFE LIMITS
+// =========================================================
+int BASE_MIN = 10;
+int BASE_MAX = 170;
+
+int SHOULDER_MIN = 60;
+int SHOULDER_MAX = 140;
+
+int ELBOW_MIN = 40;
+int ELBOW_MAX = 140;
+
+int WRIST_MIN = 60;
+int WRIST_MAX = 140;
+
+// =========================================================
+// PRESET POSITIONS
+// =========================================================
+int HOME_BASE = 90;
+int HOME_SHOULDER = 100;
+int HOME_ELBOW = 80;
+int HOME_WRIST = 90;
+
+// Pick / drop movement values
+int PICK_DOWN_SHOULDER = -20;
+int PICK_DOWN_ELBOW = 15;
+int PICK_DOWN_WRIST = 10;
+
+int PICK_UP_SHOULDER = 25;
+int PICK_UP_ELBOW = -15;
+int PICK_UP_WRIST = -10;
+
+// =========================================================
+// GRIPPER VALUES
+// =========================================================
+int GRIP_OPEN = 60;
+int GRIP_CLOSE = 130;
+
+// =========================================================
+// STEP SIZES
+// =========================================================
+int BASE_STEP_SMALL = 5;
+int BASE_STEP = 10;
+int BASE_STEP_BIG = 20;
+
+int ARM_STEP_SMALL = 3;
+int ARM_STEP = 6;
+int ARM_STEP_BIG = 10;
+
+// =========================================================
+// TIMING
+// =========================================================
+const int SERVO_DELAY = 10;
+
+// =========================================================
+// HELPER FUNCTIONS
+// =========================================================
+int clamp(int value, int minValue, int maxValue) {
+  if (value < minValue) return minValue;
+  if (value > maxValue) return maxValue;
+  return value;
+}
+
+// =========================================================
+// OLED DISPLAY HELPER
+// Only call this once per command, not inside tight loops
+// =========================================================
+void showCommand(String cmd) {
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println("Robot Arm");
+
+  display.setTextSize(2);
+  display.setCursor(0, 20);
+  display.println(cmd);
+
+  display.display();
+}
+
+// =========================================================
+// SMOOTH SERVO MOVEMENT
+// =========================================================
+void moveServoSmooth(Servo &servo, int &current, int target) {
+  while (current != target) {
+    if (current < target) current++;
+    else current--;
+
+    servo.write(current);
+    delay(SERVO_DELAY);
+  }
+}
+
+// =========================================================
+// BASE MOVEMENT
+// =========================================================
+void moveBase(int step) {
+  int target = clamp(basePos + step, BASE_MIN, BASE_MAX);
+  moveServoSmooth(baseServo, basePos, target);
+}
+
+// =========================================================
+// ARM MOVEMENT
+// UP/DOWN tuned so shoulder + elbow work together
+// =========================================================
+void moveArm(int shoulderStep, int elbowStep, int wristStep) {
+  int targetShoulder = clamp(shoulderPos + shoulderStep, SHOULDER_MIN, SHOULDER_MAX);
+  int targetElbow = clamp(elbowPos + elbowStep, ELBOW_MIN, ELBOW_MAX);
+  int targetWrist = clamp(wristPos + wristStep, WRIST_MIN, WRIST_MAX);
+
+  while (shoulderPos != targetShoulder ||
+         elbowPos != targetElbow ||
+         wristPos != targetWrist) {
+
+    if (shoulderPos < targetShoulder) shoulderPos++;
+    else if (shoulderPos > targetShoulder) shoulderPos--;
+
+    if (elbowPos < targetElbow) elbowPos++;
+    else if (elbowPos > targetElbow) elbowPos--;
+
+    if (wristPos < targetWrist) wristPos++;
+    else if (wristPos > targetWrist) wristPos--;
+
+    shoulderServo.write(shoulderPos);
+    elbowServo.write(elbowPos);
+    wristServo.write(wristPos);
+
+    delay(SERVO_DELAY);
+  }
+}
+
+// =========================================================
+// GRIPPER
+// =========================================================
+void openGrip() {
+  moveServoSmooth(gripServo, gripPos, GRIP_OPEN);
+}
+
+void closeGrip() {
+  moveServoSmooth(gripServo, gripPos, GRIP_CLOSE);
+}
+
+// =========================================================
+// PRESET POSITIONS
+// =========================================================
+void goHome() {
+  moveServoSmooth(baseServo, basePos, HOME_BASE);
+  moveServoSmooth(shoulderServo, shoulderPos, HOME_SHOULDER);
+  moveServoSmooth(elbowServo, elbowPos, HOME_ELBOW);
+  moveServoSmooth(wristServo, wristPos, HOME_WRIST);
+}
+
+// =========================================================
+// PICK / DROP
+// =========================================================
+void pickObject() {
+  Serial.println("Picking...");
+  showCommand("PICK");
+
+  // Move down
+  moveArm(PICK_DOWN_SHOULDER, PICK_DOWN_ELBOW, PICK_DOWN_WRIST);
+  delay(400);
+
+  // Grip object
+  closeGrip();
+  delay(500);
+
+  // Lift back up
+  moveArm(PICK_UP_SHOULDER, PICK_UP_ELBOW, PICK_UP_WRIST);
+  delay(400);
+}
+
+void dropObject() {
+  Serial.println("Dropping...");
+  showCommand("DROP");
+
+  // Move down
+  moveArm(PICK_DOWN_SHOULDER, PICK_DOWN_ELBOW, PICK_DOWN_WRIST);
+  delay(400);
+
+  // Release object
+  openGrip();
+  delay(500);
+
+  // Lift back up
+  moveArm(PICK_UP_SHOULDER, PICK_UP_ELBOW, PICK_UP_WRIST);
+  delay(400);
+}
+
+// =========================================================
+// SETUP
+// =========================================================
+void setup() {
+  Serial.begin(9600);
+
+  baseServo.attach(9);
+  shoulderServo.attach(6);
+  elbowServo.attach(5);
+  wristServo.attach(3);
+  gripServo.attach(11);
+
+  // OLED init
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("OLED failed");
+    while (true);
+  }
+
+  display.clearDisplay();
+  display.display();
+
+  delay(1000);
+
+  goHome();
+  openGrip();
+
+  Serial.println("READY");
+  showCommand("READY");
+}
+
+// =========================================================
+// LOOP
+// =========================================================
+void loop() {
+  while (Serial.available()) {
+    char c = Serial.read();
+
+    if (c == '\n') {
+      input.trim();
+      input.toUpperCase();
+
+      Serial.print("Received: ");
+      Serial.println(input);
+
+      // =====================================================
+      // BASE COMMANDS
+      // =====================================================
+      if (input == "LEFT_SMALL") {
+        moveBase(BASE_STEP_SMALL);
+        showCommand("L SMALL");
+      }
+      else if (input == "LEFT") {
+        moveBase(BASE_STEP);
+        showCommand("LEFT");
+      }
+      else if (input == "LEFT_MORE") {
+        moveBase(BASE_STEP_BIG);
+        showCommand("L MORE");
+      }
+      else if (input == "RIGHT_SMALL") {
+        moveBase(-BASE_STEP_SMALL);
+        showCommand("R SMALL");
+      }
+      else if (input == "RIGHT") {
+        moveBase(-BASE_STEP);
+        showCommand("RIGHT");
+      }
+      else if (input == "RIGHT_MORE") {
+        moveBase(-BASE_STEP_BIG);
+        showCommand("R MORE");
+      }
+
+      // =====================================================
+      // ARM COMMANDS
+      // Wrist kept out of normal UP/DOWN to reduce twisting
+      // =====================================================
+      else if (input == "UP_SMALL") {
+        moveArm(ARM_STEP_SMALL, -ARM_STEP_SMALL, 0);
+        showCommand("U SMALL");
+      }
+      else if (input == "UP") {
+        moveArm(ARM_STEP, -ARM_STEP, 0);
+        showCommand("UP");
+      }
+      else if (input == "UP_MORE") {
+        moveArm(ARM_STEP_BIG, -ARM_STEP_BIG, 0);
+        showCommand("U MORE");
+      }
+      else if (input == "DOWN_SMALL") {
+        moveArm(-ARM_STEP_SMALL, ARM_STEP_SMALL, 0);
+        showCommand("D SMALL");
+      }
+      else if (input == "DOWN") {
+        moveArm(-ARM_STEP, ARM_STEP, 0);
+        showCommand("DOWN");
+      }
+      else if (input == "DOWN_MORE") {
+        moveArm(-ARM_STEP_BIG, ARM_STEP_BIG, 0);
+        showCommand("D MORE");
+      }
+
+      // =====================================================
+      // GRIPPER COMMANDS
+      // =====================================================
+      else if (input == "OPEN") {
+        openGrip();
+        showCommand("OPEN");
+      }
+      else if (input == "CLOSE") {
+        closeGrip();
+        showCommand("CLOSE");
+      }
+
+      // =====================================================
+      // ACTION COMMANDS
+      // =====================================================
+      else if (input == "PICK") {
+        pickObject();
+      }
+      else if (input == "DROP") {
+        dropObject();
+      }
+      else if (input == "RESET") {
+        goHome();
+        showCommand("RESET");
+      }
+
+      // =====================================================
+      // UNKNOWN COMMAND
+      // =====================================================
+      else {
+        showCommand("UNKNOWN");
+      }
+
+      input = "";
+    } else {
+      input += c;
+    }
+  }
+}
