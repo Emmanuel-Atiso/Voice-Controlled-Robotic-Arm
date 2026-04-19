@@ -1,0 +1,747 @@
+import threading
+import time
+import tkinter as tk
+from tkinter import ttk
+
+import cv2
+import pyttsx3
+import serial
+
+
+# =========================================================
+# CONFIGURATION
+# =========================================================
+
+PORT = "COM3"
+BAUD = 9600
+
+# Set these to True if the robot moves in the opposite direction
+INVERT_X = False
+INVERT_Y = False
+
+# Camera settings
+CAMERA_INDEX = 1
+CAMERA_WIDTH = 1280
+CAMERA_HEIGHT = 720
+PREVIEW_WIDTH = 640
+PREVIEW_HEIGHT = 480
+
+# Tracking behaviour
+DEADBAND_X = 80
+DEADBAND_Y = 80
+SMALL_THRESH = 150
+MEDIUM_THRESH = 250
+COMMAND_INTERVAL = 0.25
+SMOOTHING_WINDOW = 8
+
+# Delay between repeated commands
+REPEAT_SEND_DELAY = 0.2
+
+# Time to wait while robot finishes PICK / DROP
+ACTION_WAIT_SECONDS = 3.0
+
+# Valid robot commands
+VALID_COMMANDS = {
+    "LEFT_SMALL", "LEFT", "LEFT_MORE",
+    "RIGHT_SMALL", "RIGHT", "RIGHT_MORE",
+    "DOWN_SMALL", "DOWN", "DOWN_MORE",
+    "UP_SMALL", "UP", "UP_MORE",
+    "OPEN", "CLOSE", "RESET",
+    "PICK", "DROP",
+}
+
+
+# =========================================================
+# COMMAND HELPERS
+# =========================================================
+
+def normalize_command(text: str):
+    """
+    Convert spoken or typed text into a valid robot command.
+
+    Supports:
+    - direct commands like: LEFT, PICK, RESET
+    - repeated commands like: RIGHT 3
+    - phrase matching like: "left more", "up small", etc.
+
+    Returns:
+        tuple[str | None, int | None]
+        Example: ("RIGHT", 3)
+    """
+    text = text.upper().strip()
+    if not text:
+        return None, None
+
+    parts = text.split()
+
+    if len(parts) == 2 and parts[1].isdigit():
+        base_cmd = parts[0]
+        count = int(parts[1])
+    else:
+        base_cmd = text
+        count = 1
+
+    # Exact valid command
+    if base_cmd in VALID_COMMANDS:
+        return base_cmd, count
+
+    # Phrase-based matching
+    phrase_map = [
+        ("LEFT SMALL", "LEFT_SMALL"),
+        ("LEFT MORE", "LEFT_MORE"),
+        ("LEFT", "LEFT"),
+        ("RIGHT SMALL", "RIGHT_SMALL"),
+        ("RIGHT MORE", "RIGHT_MORE"),
+        ("RIGHT", "RIGHT"),
+        ("DOWN SMALL", "DOWN_SMALL"),
+        ("DOWN MORE", "DOWN_MORE"),
+        ("DOWN", "DOWN"),
+        ("UP SMALL", "UP_SMALL"),
+        ("UP MORE", "UP_MORE"),
+        ("UP", "UP"),
+        ("OPEN", "OPEN"),
+        ("CLOSE", "CLOSE"),
+        ("RESET", "RESET"),
+        ("PICK", "PICK"),
+        ("DROP", "DROP"),
+    ]
+
+    for phrase, command in phrase_map:
+        if phrase in base_cmd:
+            return command, count
+
+    return None, None
+
+
+def choose_axis_command(error: int, invert: bool, deadband: int):
+    """
+    Convert tracking error into LEFT/RIGHT or UP/DOWN movement strength.
+
+    Returns one of:
+    - *_SMALL
+    - normal command
+    - *_MORE
+    - None if inside deadband
+    """
+    if abs(error) < deadband:
+        return None
+
+    if abs(error) < SMALL_THRESH:
+        strength = "SMALL"
+    elif abs(error) < MEDIUM_THRESH:
+        strength = "NORMAL"
+    else:
+        strength = "MORE"
+
+    if error < 0:
+        direction = "NEGATIVE"
+    else:
+        direction = "POSITIVE"
+
+    return direction, strength, invert
+
+
+def build_x_command(error_x: int):
+    """
+    Build the base rotation command from horizontal error.
+    """
+    result = choose_axis_command(error_x, INVERT_X, DEADBAND_X)
+    if result is None:
+        return None
+
+    direction, strength, invert = result
+
+    if direction == "NEGATIVE":
+        # Object is left of centre
+        base = "LEFT" if not invert else "RIGHT"
+    else:
+        # Object is right of centre
+        base = "RIGHT" if not invert else "LEFT"
+
+    if strength == "SMALL":
+        return f"{base}_SMALL"
+    if strength == "MORE":
+        return f"{base}_MORE"
+    return base
+
+
+def build_y_command(error_y: int):
+    """
+    Build the arm movement command from vertical error.
+    """
+    result = choose_axis_command(error_y, INVERT_Y, DEADBAND_Y)
+    if result is None:
+        return None
+
+    direction, strength, invert = result
+
+    if direction == "NEGATIVE":
+        # Object is above centre
+        base = "UP" if not invert else "DOWN"
+    else:
+        # Object is below centre
+        base = "DOWN" if not invert else "UP"
+
+    if strength == "SMALL":
+        return f"{base}_SMALL"
+    if strength == "MORE":
+        return f"{base}_MORE"
+    return base
+
+
+# =========================================================
+# MAIN APPLICATION
+# =========================================================
+
+class RobotApp:
+    """
+    Main desktop application for:
+    - manual / voice command entry
+    - live object tracking
+    - serial communication with Arduino
+    """
+
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title("Robot Control – Voice + Tracking")
+        self.root.geometry("950x650")
+
+        # Status message shown in GUI
+        self.status = tk.StringVar(value="Opening port...")
+
+        # Serial connection
+        self.ser = None
+        self.open_serial()
+
+        # Text-to-speech
+        self.engine = pyttsx3.init()
+        self.engine.setProperty("rate", 165)
+
+        # Tracking state
+        self.tracking = False
+        self.track_thread = None
+        self.cap = None
+        self.tracker = None
+
+        # Busy flag stops tracking from interrupting actions
+        self.busy = False
+
+        # Timing and smoothing
+        self.last_cmd_time = 0
+        self.smooth_x = []
+        self.smooth_y = []
+
+        # Debug display text
+        self.last_debug_text = "No tracking yet."
+
+        # Build GUI
+        self.build_gui()
+
+        # Clean shutdown
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    # =====================================================
+    # SERIAL
+    # =====================================================
+
+    def open_serial(self):
+        """
+        Open the serial connection to the Arduino.
+        """
+        try:
+            self.ser = serial.Serial(PORT, BAUD, timeout=2)
+            time.sleep(3)
+            self.status.set("Connected.")
+        except Exception as exc:
+            self.ser = None
+            self.status.set(f"Serial error: {exc}")
+
+    def safe_write(self, message: str):
+        """
+        Send a command to the Arduino safely.
+        """
+        try:
+            if self.ser and self.ser.is_open:
+                self.ser.write((message + "\n").encode())
+                print(f"SENDING TO ARDUINO: {message}")
+                return True
+            else:
+                self.status.set("Serial not open.")
+                return False
+        except serial.SerialException:
+            self.status.set("Serial port busy or disconnected.")
+            return False
+        except Exception as exc:
+            self.status.set(f"Serial error: {exc}")
+            return False
+
+    # =====================================================
+    # TEXT TO SPEECH
+    # =====================================================
+
+    def speak(self, message: str):
+        """
+        Speak a short message using text-to-speech.
+        """
+        self.engine.say(message)
+        self.engine.runAndWait()
+
+    # =====================================================
+    # GUI BUILD
+    # =====================================================
+
+    def build_gui(self):
+        """
+        Create the main window layout and both mode screens.
+        """
+        mode_frame = ttk.Frame(self.root)
+        mode_frame.pack(pady=10)
+
+        ttk.Button(
+            mode_frame,
+            text="Voice Mode",
+            command=self.show_voice_mode
+        ).pack(side="left", padx=10)
+
+        ttk.Button(
+            mode_frame,
+            text="Tracking Mode",
+            command=self.show_tracking_mode
+        ).pack(side="left", padx=10)
+
+        ttk.Label(self.root, textvariable=self.status).pack(pady=5)
+
+        self.container = ttk.Frame(self.root)
+        self.container.pack(fill="both", expand=True)
+
+        self.voice_frame = ttk.Frame(self.container)
+        self.track_frame = ttk.Frame(self.container)
+
+        self.build_voice_mode()
+        self.build_tracking_mode()
+
+        self.show_voice_mode()
+
+    def build_voice_mode(self):
+        """
+        Create the text/voice command interface.
+        """
+        ttk.Label(
+            self.voice_frame,
+            text="Voice / Text Command"
+        ).pack(anchor="w", padx=10, pady=5)
+
+        self.text = tk.Text(self.voice_frame, height=5, width=80)
+        self.text.pack(padx=10, pady=5)
+
+        button_row = ttk.Frame(self.voice_frame)
+        button_row.pack(pady=10)
+
+        ttk.Button(
+            button_row,
+            text="Ask",
+            command=self.ask_command
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            button_row,
+            text="Send Command",
+            command=self.send_command
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            button_row,
+            text="Clear",
+            command=self.clear_text
+        ).pack(side="left", padx=5)
+
+        help_text = (
+            "Commands:\n"
+            "LEFT_SMALL, LEFT, LEFT_MORE\n"
+            "RIGHT_SMALL, RIGHT, RIGHT_MORE\n"
+            "DOWN_SMALL, DOWN, DOWN_MORE\n"
+            "UP_SMALL, UP, UP_MORE\n"
+            "OPEN, CLOSE, RESET, PICK, DROP\n\n"
+            "Repeat commands:\n"
+            "RIGHT 3 -> sends RIGHT three times\n"
+            "UP_SMALL 2 -> sends UP_SMALL twice\n\n"
+            "Windows dictation:\n"
+            "Click in the box -> Win+H -> Speak"
+        )
+
+        ttk.Label(
+            self.voice_frame,
+            text=help_text,
+            justify="left"
+        ).pack(anchor="w", padx=10, pady=5)
+
+    def build_tracking_mode(self):
+        """
+        Create the object-tracking interface.
+        """
+        ttk.Label(self.track_frame, text="Tracking Mode").pack(
+            anchor="w",
+            padx=10,
+            pady=5
+        )
+
+        button_row = ttk.Frame(self.track_frame)
+        button_row.pack(pady=10)
+
+        ttk.Button(
+            button_row,
+            text="Start Tracking",
+            command=self.start_tracking
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            button_row,
+            text="Stop Tracking",
+            command=self.stop_tracking
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            button_row,
+            text="Pick Now",
+            command=lambda: self.send_direct("PICK")
+        ).pack(side="left", padx=5)
+
+        ttk.Button(
+            button_row,
+            text="Drop Now",
+            command=lambda: self.send_direct("DROP")
+        ).pack(side="left", padx=5)
+
+        self.video_label = tk.Label(self.track_frame)
+        self.video_label.pack(pady=10)
+
+        self.debug_label = ttk.Label(
+            self.track_frame,
+            text="Debug info will appear here.",
+            justify="left"
+        )
+        self.debug_label.pack(pady=5)
+
+    # =====================================================
+    # MODE SWITCHING
+    # =====================================================
+
+    def show_voice_mode(self):
+        """
+        Show the voice/text control panel.
+        """
+        self.track_frame.pack_forget()
+        self.voice_frame.pack(fill="both", expand=True)
+
+    def show_tracking_mode(self):
+        """
+        Show the tracking control panel.
+        """
+        self.voice_frame.pack_forget()
+        self.track_frame.pack(fill="both", expand=True)
+
+    # =====================================================
+    # VOICE / TEXT MODE
+    # =====================================================
+
+    def ask_command(self):
+        """
+        Prompt the user to speak using Windows dictation.
+        """
+        self.text.delete("1.0", tk.END)
+        self.text.focus_set()
+        self.status.set("Press Win+H and speak.")
+        self.speak("What command do you want me to perform")
+
+    def clear_text(self):
+        """
+        Clear the text box.
+        """
+        self.text.delete("1.0", tk.END)
+
+    def send_direct(self, command: str):
+        """
+        Send a direct command immediately.
+        For PICK and DROP, tracking is paused first so the action can finish.
+        """
+        was_tracking = self.tracking
+
+        # Stop tracking from interfering
+        self.busy = True
+        self.tracking = False
+        time.sleep(0.1)
+
+        self.safe_write(command)
+        self.status.set(f"Sent: {command}")
+
+        if command in ["PICK", "DROP"]:
+            time.sleep(ACTION_WAIT_SECONDS)
+
+        self.busy = False
+
+        # Resume tracking if it was active before
+        if was_tracking:
+            self.tracking = True
+            self.track_thread = threading.Thread(target=self.track_loop, daemon=True)
+            self.track_thread.start()
+
+    def send_command(self):
+        """
+        Read the text box, normalise the command, and send it.
+        """
+        spoken = self.text.get("1.0", tk.END).strip()
+        if not spoken:
+            self.status.set("No text entered.")
+            return
+
+        command, count = normalize_command(spoken)
+        if not command:
+            self.status.set(f"Unknown command: {spoken}")
+            self.speak("I did not understand the command")
+            return
+
+        # Pause tracking for PICK / DROP
+        if command in ["PICK", "DROP"] and count == 1:
+            self.send_direct(command)
+            self.speak(f"Sending {command.lower()}")
+            return
+
+        for _ in range(count):
+            self.safe_write(command)
+            time.sleep(REPEAT_SEND_DELAY)
+
+        self.status.set(f"You said: {spoken} -> Sent: {command} x{count}")
+        self.speak(f"Sending {command.replace('_', ' ')} {count} times")
+
+    # =====================================================
+    # TRACKING MODE
+    # =====================================================
+
+    def start_tracking(self):
+        """
+        Start live object tracking after the user selects a target.
+        """
+        if self.tracking:
+            return
+
+        self.cap = cv2.VideoCapture(CAMERA_INDEX)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
+
+        ret, frame = self.cap.read()
+        if not ret:
+            self.status.set("Camera error.")
+            return
+
+        bbox = cv2.selectROI("Select Object", frame, False)
+        cv2.destroyWindow("Select Object")
+
+        if bbox == (0, 0, 0, 0):
+            self.status.set("No object selected.")
+            return
+
+        self.tracker = cv2.TrackerCSRT_create()
+        self.tracker.init(frame, bbox)
+
+        self.smooth_x = []
+        self.smooth_y = []
+        self.last_cmd_time = 0
+
+        self.tracking = True
+        self.track_thread = threading.Thread(target=self.track_loop, daemon=True)
+        self.track_thread.start()
+
+        self.status.set("Tracking started.")
+
+    def stop_tracking(self):
+        """
+        Stop tracking and release the camera.
+        """
+        self.tracking = False
+
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+
+        self.video_label.config(image="")
+        self.debug_label.config(text="Tracking stopped.")
+        self.status.set("Tracking stopped.")
+
+    def track_loop(self):
+        """
+        Background thread that reads camera frames, updates tracker,
+        sends movement commands, and updates the preview.
+        """
+        while self.tracking:
+            if self.cap is None or not self.tracking:
+                break
+
+            ret, frame = self.cap.read()
+            if not ret:
+                continue
+
+            success, bbox = self.tracker.update(frame)
+
+            frame_h, frame_w = frame.shape[:2]
+            center_x = frame_w // 2
+            center_y = frame_h // 2
+
+            cv2.circle(frame, (center_x, center_y), 6, (255, 0, 0), -1)
+
+            if success:
+                x, y, w, h = [int(v) for v in bbox]
+                cx = x + w // 2
+                cy = y + h // 2
+
+                cx, cy = self.get_smoothed_center(cx, cy)
+
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+                cv2.line(frame, (center_x, center_y), (cx, cy), (0, 255, 255), 2)
+
+                cmd_x, cmd_y, error_x, error_y = self.process_tracking(
+                    cx, cy, frame_w, frame_h
+                )
+
+                self.last_debug_text = (
+                    f"Frame center: ({center_x}, {center_y})\n"
+                    f"Object center: ({cx}, {cy})\n"
+                    f"Error X: {error_x} | Error Y: {error_y}\n"
+                    f"Cmd X: {cmd_x} | Cmd Y: {cmd_y}\n"
+                    f"INVERT_X={INVERT_X}, INVERT_Y={INVERT_Y}"
+                )
+
+                cv2.putText(
+                    frame,
+                    f"errX={error_x} errY={error_y}",
+                    (30, 35),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 255),
+                    2,
+                )
+
+                cv2.putText(
+                    frame,
+                    f"cmdX={cmd_x} cmdY={cmd_y}",
+                    (30, 70),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 255),
+                    2,
+                )
+            else:
+                self.last_debug_text = "Tracking lost!"
+                cv2.putText(
+                    frame,
+                    "Tracking lost!",
+                    (30, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2,
+                )
+
+            self.update_preview(frame)
+
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+
+    def get_smoothed_center(self, cx: int, cy: int):
+        """
+        Apply simple moving-average smoothing to object centre.
+        """
+        self.smooth_x.append(cx)
+        self.smooth_y.append(cy)
+
+        if len(self.smooth_x) > SMOOTHING_WINDOW:
+            self.smooth_x.pop(0)
+            self.smooth_y.pop(0)
+
+        smoothed_x = sum(self.smooth_x) // len(self.smooth_x)
+        smoothed_y = sum(self.smooth_y) // len(self.smooth_y)
+
+        return smoothed_x, smoothed_y
+
+    def update_preview(self, frame):
+        """
+        Update the preview image and debug text on the GUI.
+        """
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        preview = cv2.resize(rgb, (PREVIEW_WIDTH, PREVIEW_HEIGHT))
+        png_bytes = cv2.imencode(".png", preview)[1].tobytes()
+
+        image = tk.PhotoImage(master=self.video_label, data=png_bytes)
+
+        self.video_label.imgtk = image
+        self.video_label.configure(image=image)
+        self.debug_label.config(text=self.last_debug_text)
+
+    # =====================================================
+    # TRACKING DECISION LOGIC
+    # =====================================================
+
+    def process_tracking(self, cx, cy, frame_w, frame_h):
+        """
+        Calculate tracking error and send movement commands if needed.
+        """
+        if self.busy:
+            return None, None, 0, 0
+
+        center_x = frame_w // 2
+        center_y = frame_h // 2
+
+        error_x = cx - center_x
+        error_y = cy - center_y
+
+        now = time.time()
+        if now - self.last_cmd_time < COMMAND_INTERVAL:
+            return None, None, error_x, error_y
+
+        self.last_cmd_time = now
+
+        cmd_x = build_x_command(error_x)
+        cmd_y = build_y_command(error_y)
+
+        if cmd_x:
+            print("CMD_X:", cmd_x)
+            self.safe_write(cmd_x)
+        if cmd_y:
+            print("CMD_Y:", cmd_y)
+            self.safe_write(cmd_y)
+
+        print(
+            f"cx={cx}, cy={cy}, error_x={error_x}, error_y={error_y}, "
+            f"cmd_x={cmd_x}, cmd_y={cmd_y}"
+        )
+
+        return cmd_x, cmd_y, error_x, error_y
+
+    # =====================================================
+    # CLEAN SHUTDOWN
+    # =====================================================
+
+    def on_close(self):
+        """
+        Close camera and serial cleanly when the window closes.
+        """
+        self.stop_tracking()
+
+        try:
+            if self.ser and self.ser.is_open:
+                self.ser.close()
+        except Exception:
+            pass
+
+        self.root.destroy()
+
+
+# =========================================================
+# PROGRAM ENTRY
+# =========================================================
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RobotApp(root)
+    root.mainloop()
